@@ -1,0 +1,30 @@
+{
+  "name": "myreact",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack-dev-server --no-inline"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cheesehary/myReact.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cheesehary/myReact/issues"
+  },
+  "homepage": "https://github.com/cheesehary/myReact#readme",
+  "devDependencies": {
+    "html-webpack-plugin": "^3.2.0",
+    "react": "^15.6.2",
+    "react-dom": "^15.6.2",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.4.2",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.2.1"
+  }
+}
