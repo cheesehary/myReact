@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack-dev-server --no-inline"
+    "dev": "webpack-dev-server"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/cheesehary/myReact#readme",
   "devDependencies": {
+    "@types/react": "^16.8.12",
     "html-webpack-plugin": "^3.2.0",
     "react": "^15.6.2",
     "react-dom": "^15.6.2",
