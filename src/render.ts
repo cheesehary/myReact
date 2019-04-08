@@ -35,7 +35,7 @@ function mountComponent(reactEl: ReactElement) {
     }
     case ReactType.Functional: {
       const type = reactEl.type as Function;
-      const renderedEl = type();
+      const renderedEl = type(reactEl.props);
       return mountComponent(renderedEl);
     }
   }

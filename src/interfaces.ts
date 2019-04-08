@@ -8,7 +8,7 @@ export type ChildrenProp = ReactElement | string | number;
 
 export class ReactElement {
   public _rtype: ReactType;
-  public type: Function | string;
+  public type: Function | SFC | string;
   public props: { [prop: string]: any };
 
   constructor({ _rtype, type, props }) {
@@ -18,10 +18,15 @@ export class ReactElement {
   }
 }
 
-export abstract class Component<P={}> {
-  public props: P;
+export interface SFC<P={}> {
+  (props: Readonly<P>): ReactElement;
+}
 
-  constructor(props) {
+export abstract class Component<P={}, S={}> {
+  public props: Readonly<P>;
+  public state: Readonly<S>;
+
+  constructor(props: Readonly<P>) {
     this.props = props;
   }
   abstract render(): ReactElement;

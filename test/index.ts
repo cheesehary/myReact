@@ -1,31 +1,36 @@
-import React from "../src";
+import React, { SFC } from "../src";
 const ce = React.createElement;
 
-class Me extends React.Component<{ name: string }> {
+class Counter extends React.Component<{}, { count: number }> {
   constructor(props) {
     super(props);
+    this.state = {
+      count: 0
+    };
   }
 
   render() {
-    const { name } = this.props;
-    return ce("p", null, `my name is ${name}`);
+    const { count } = this.state;
+    return ce("p", null, `the number now is ${count}`);
   }
 }
 
-function Title(props) {
-  return ce("p", null, "hello world!");
-}
+const Header: SFC<{ name: string }> = ({ name }) => {
+  return ce("p", null, `hello ${name}!`);
+};
 
-class App extends React.Component {
+class App extends React.Component<{}, { name: string }> {
   constructor(props) {
     super(props);
+    this.state = {
+      name: "myReact"
+    };
   }
 
   render() {
-    return ce("div", null, ce(Title), ce(Me, { name: "myReact" }));
+    const { name } = this.state;
+    return ce("div", null, ce(Header, { name }), ce(Counter));
   }
 }
 
 React.render(ce(App), document.getElementById("app"));
-
-

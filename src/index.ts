@@ -9,3 +9,4 @@ const React = {
 };
 
 export default React;
+export { SFC } from "./interfaces";
