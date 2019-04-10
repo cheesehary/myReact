@@ -1,42 +1,34 @@
-import { ReactType, ReactElement, ChildrenProp, Component } from "./interfaces";
+import { ReactType, ReactElement, ChildrenProp } from "./interfaces";
+import {
+  Component,
+  ReactComponent,
+  ReactDOMComponent,
+  ReactClassComponent,
+  ReactFunctionalComponent
+} from "./Component";
 
 function render(reactEl: ReactElement, container: HTMLElement) {
-  // const component = instantiateComponent(reactEl);
-  const tree = mountComponent(reactEl);
-  container.insertBefore(tree, null);
+  const component = instantiateComponent(reactEl);
+  const node = component.mountComponent();
+  container.insertBefore(node, null);
 }
 
 export default render;
 
-function mountComponent(reactEl: ReactElement) {
+function instantiateComponent(reactEl: ReactElement) {
   switch (reactEl._rtype) {
     case ReactType.Dom: {
-      const el = document.createElement(reactEl.type as string);
-      const children: Array<ChildrenProp> = reactEl.props.children;
-      if (children.length) {
-        children.forEach(child => {
-          if (typeof child === "string" || typeof child === "number") {
-            const text = document.createTextNode(child.toString());
-            el.appendChild(text);
-          } else if (child instanceof ReactElement) {
-            const subEl = mountComponent(child);
-            el.appendChild(subEl);
-          }
-        });
-      }
-      return el;
+      return new ReactDOMComponent(reactEl);
     }
     case ReactType.Class: {
-      const type = reactEl.type;
-      //@ts-ignore
-      const inst: Component = new type(reactEl.props);
-      const renderedEl = inst.render();
-      return mountComponent(renderedEl);
+      return new ReactClassComponent(reactEl);
     }
     case ReactType.Functional: {
-      const type = reactEl.type as Function;
-      const renderedEl = type(reactEl.props);
-      return mountComponent(renderedEl);
+      return new ReactFunctionalComponent(reactEl);
     }
   }
 }
+
+Object.assign(ReactComponent.prototype, {
+  _instantiateComponent: instantiateComponent
+});

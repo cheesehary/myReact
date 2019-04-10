@@ -21,13 +21,3 @@ export class ReactElement {
 export interface SFC<P={}> {
   (props: Readonly<P>): ReactElement;
 }
-
-export abstract class Component<P={}, S={}> {
-  public props: Readonly<P>;
-  public state: Readonly<S>;
-
-  constructor(props: Readonly<P>) {
-    this.props = props;
-  }
-  abstract render(): ReactElement;
-}

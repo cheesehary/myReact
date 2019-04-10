@@ -1,4 +1,5 @@
-import { ReactType, ReactElement, ChildrenProp, Component } from "./interfaces";
+import { ReactType, ReactElement, ChildrenProp } from "./interfaces";
+import { Component } from "./Component";
 
 function createElement(
   type: ReactElement["type"],

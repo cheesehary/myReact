@@ -1,6 +1,7 @@
 import createElement from "./createElement";
 import render from "./render";
-import { Component } from "./interfaces";
+import { Component } from "./Component";
+export { SFC } from "./interfaces";
 
 const React = {
   createElement,
@@ -9,4 +10,3 @@ const React = {
 };
 
 export default React;
-export { SFC } from "./interfaces";
