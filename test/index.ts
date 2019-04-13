@@ -9,9 +9,18 @@ class Counter extends React.Component<{}, { count: number }> {
     };
   }
 
+  addOne = () => {
+    this.setState({ count: this.state.count + 1 });
+  };
+
   render() {
     const { count } = this.state;
-    return ce("p", null, `the number now is ${count}`);
+    return ce(
+      "div",
+      null,
+      ce("p", null, `the number now is ${count}`),
+      ce("p", null, ce("button", { onClick: this.addOne }, "add one"))
+    );
   }
 }
 

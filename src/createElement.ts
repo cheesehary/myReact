@@ -22,7 +22,7 @@ function chooseReactType(type: ReactElement["type"]): ReactType {
   if (typeof type === "string") {
     return ReactType.Dom;
   }
-  if (typeof type === "function" && !!type.prototype.render) {
+  if (type instanceof Component) {
     return ReactType.Class;
   }
   if (typeof type === "function") {
