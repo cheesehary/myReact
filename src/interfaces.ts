@@ -4,7 +4,7 @@ export enum ReactType {
   Functional
 }
 
-export type ChildrenProp = ReactElement | string | number;
+export type Child = ReactElement | string | number;
 
 export class ReactElement {
   public _rtype: ReactType;

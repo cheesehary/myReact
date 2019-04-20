@@ -1,10 +1,11 @@
-import { ReactType, ReactElement, ChildrenProp } from "./interfaces";
+import { ReactType, ReactElement, Child } from "./interfaces";
 import {
   Component,
   ReactComponent,
   ReactDOMComponent,
   ReactClassComponent,
-  ReactFunctionalComponent
+  ReactFunctionalComponent,
+  ReactTextComponent
 } from "./Component";
 
 function render(reactEl: ReactElement, container: HTMLElement) {
@@ -15,17 +16,21 @@ function render(reactEl: ReactElement, container: HTMLElement) {
 
 export default render;
 
-function instantiateComponent(reactEl: ReactElement) {
-  switch (reactEl._rtype) {
-    case ReactType.Dom: {
-      return new ReactDOMComponent(reactEl);
+function instantiateComponent(reactEl: Child) {
+  if(reactEl instanceof ReactElement) {
+    switch (reactEl._rtype) {
+      case ReactType.Dom: {
+        return new ReactDOMComponent(reactEl);
+      }
+      case ReactType.Class: {
+        return new ReactClassComponent(reactEl);
+      }
+      case ReactType.Functional: {
+        return new ReactFunctionalComponent(reactEl);
+      }
     }
-    case ReactType.Class: {
-      return new ReactClassComponent(reactEl);
-    }
-    case ReactType.Functional: {
-      return new ReactFunctionalComponent(reactEl);
-    }
+  } else {
+    return new ReactTextComponent(reactEl);
   }
 }
 

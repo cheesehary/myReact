@@ -1,4 +1,4 @@
-import { ReactElement, ChildrenProp, SFC } from "./interfaces";
+import { ReactElement, Child, SFC } from "./interfaces";
 import { ReservedProps, ListenerProps } from "./dom";
 
 const ReactInstanceMap = new WeakMap<object, ReactClassComponent>();
@@ -22,17 +22,37 @@ export class Component<P = {}, S = {}> {
 
 export abstract class ReactComponent {
   protected _instantiateComponent: (reactEl: ReactElement) => ReactComponent;
-  public _curElement: ReactElement;
-  public _hostNode: HTMLElement;
+  public _curElement: Child;
+  protected _hostNode: HTMLElement | Text;
 
-  constructor(reactEl: ReactElement) {
+  constructor(reactEl: Child) {
     this._curElement = reactEl;
   }
-  abstract mountComponent(): HTMLElement;
-  abstract receiveComponent(nextEl: ReactElement): void;
+  abstract mountComponent(): HTMLElement | Text;
+  abstract receiveComponent(nextEl: Child): void;
+}
+
+export class ReactTextComponent extends ReactComponent {
+  public _curElement: number | string;
+
+  constructor(reactEl: number | string) {
+    super(reactEl);
+  }
+
+  mountComponent(): Text {
+    const element = this._curElement;
+    const node = document.createTextNode(element.toString());
+    this._hostNode = node;
+    return node;
+  }
+
+  receiveComponent(nextEl: string | number) {}
 }
 
 export class ReactDOMComponent extends ReactComponent {
+  public _curElement: ReactElement;
+  protected _renderedChildren: { [name: string]: ReactComponent };
+
   constructor(reactEl: ReactElement) {
     super(reactEl);
   }
@@ -42,7 +62,7 @@ export class ReactDOMComponent extends ReactComponent {
     const node = document.createElement(element.type as string);
     this._hostNode = node;
     this.updateDOMProps(null, element.props);
-    const children: Array<ChildrenProp> = element.props.children;
+    const children: Array<Child> = element.props.children;
     this.appendChildrenNodes(children);
     return node;
   }
@@ -53,7 +73,7 @@ export class ReactDOMComponent extends ReactComponent {
   }
 
   updateDOMProps(prevProps, nextProps) {
-    const node = this._hostNode;
+    const node = this._hostNode as HTMLElement;
     for (let propKey in prevProps) {
       if (
         nextProps.hasOwnProperty(propKey) ||
@@ -92,7 +112,7 @@ export class ReactDOMComponent extends ReactComponent {
     }
   }
 
-  appendChildrenNodes(children: Array<ChildrenProp>) {
+  appendChildrenNodes(children: Array<Child>) {
     const node = this._hostNode;
     if (children.length) {
       children.forEach(child => {
@@ -110,8 +130,9 @@ export class ReactDOMComponent extends ReactComponent {
 }
 
 export class ReactClassComponent extends ReactComponent {
-  public _instance: Component;
-  public _renderedComponent: ReactComponent;
+  public _curElement: ReactElement;
+  protected _instance: Component;
+  protected _renderedComponent: ReactComponent;
   public _pendingState;
 
   constructor(reactEl: ReactElement) {
@@ -128,7 +149,7 @@ export class ReactClassComponent extends ReactComponent {
     const renderedEl = inst.render();
     const childComponent = this._instantiateComponent(renderedEl);
     this._renderedComponent = childComponent;
-    return childComponent.mountComponent();
+    return childComponent.mountComponent() as HTMLElement;
   }
 
   updateComponent(prevEl: ReactElement, nextEl: ReactElement) {
@@ -161,7 +182,8 @@ export class ReactClassComponent extends ReactComponent {
 }
 
 export class ReactFunctionalComponent extends ReactComponent {
-  public _renderedComponent: ReactComponent;
+  public _curElement: ReactElement;
+  protected _renderedComponent: ReactComponent;
 
   constructor(reactEl: ReactElement) {
     super(reactEl);
@@ -172,7 +194,7 @@ export class ReactFunctionalComponent extends ReactComponent {
     const type = element.type as SFC;
     const renderedEl = type(element.props);
     const childComponent = this._instantiateComponent(renderedEl);
-    return childComponent.mountComponent();
+    return childComponent.mountComponent() as HTMLElement;
   }
 
   receiveComponent(nextEl: ReactElement) {
@@ -187,15 +209,16 @@ export class ReactFunctionalComponent extends ReactComponent {
   }
 }
 
-function onlyUpdateComponent(
-  prevEl: ReactElement,
-  nextEl: ReactElement
-): boolean {
+function onlyUpdateComponent(prevEl: Child, nextEl: Child): boolean {
   if (!prevEl && !nextEl) {
     return true;
   }
   if (!prevEl || !nextEl) {
     return false;
   }
-  return nextEl.type === prevEl.type;
+  if (typeof prevEl === "string" || typeof prevEl === "number") {
+    return typeof nextEl === "string" || typeof nextEl === "number";
+  } else {
+    return nextEl instanceof ReactElement && prevEl.type === nextEl.type;
+  }
 }
