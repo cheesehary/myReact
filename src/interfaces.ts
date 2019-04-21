@@ -21,3 +21,8 @@ export class ReactElement {
 export interface SFC<P={}> {
   (props: Readonly<P>): ReactElement;
 }
+
+export enum UpdateType {
+  Insert,
+  Remove
+}

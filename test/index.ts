@@ -7,13 +7,16 @@ class Counter extends React.Component<{}, { count: number }> {
     this.state = {
       count: 0
     };
+    console.log("constructor Counter");
   }
 
   addOne = () => {
     this.setState({ count: this.state.count + 1 });
+    console.log(this.state.count);
   };
 
   render() {
+    console.log("render Counter");
     const { count } = this.state;
     return ce(
       "div",
@@ -25,6 +28,7 @@ class Counter extends React.Component<{}, { count: number }> {
 }
 
 const Header: SFC<{ name: string }> = ({ name }) => {
+  console.log("render Header");
   return ce("p", null, `hello ${name}!`);
 };
 
@@ -34,9 +38,11 @@ class App extends React.Component<{}, { name: string }> {
     this.state = {
       name: "myReact"
     };
+    console.log("constructor App");
   }
 
   render() {
+    console.log("render App");
     const { name } = this.state;
     return ce("div", null, ce(Header, { name }), ce(Counter));
   }

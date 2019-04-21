@@ -1,10 +1,10 @@
-import { ReactType, ReactElement, ChildrenProp } from "./interfaces";
+import { ReactType, ReactElement, Child } from "./interfaces";
 import { Component } from "./Component";
 
 function createElement(
   type: ReactElement["type"],
   config = {},
-  ...children: Array<ChildrenProp>
+  ...children: Array<Child>
 ): ReactElement {
   const props: ReactElement["props"] = { ...config };
   props.children = children.length ? [...children] : [];
@@ -22,7 +22,7 @@ function chooseReactType(type: ReactElement["type"]): ReactType {
   if (typeof type === "string") {
     return ReactType.Dom;
   }
-  if (type instanceof Component) {
+  if (type.prototype instanceof Component) {
     return ReactType.Class;
   }
   if (typeof type === "function") {

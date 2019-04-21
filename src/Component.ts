@@ -1,4 +1,4 @@
-import { ReactElement, Child, SFC } from "./interfaces";
+import { ReactElement, Child, SFC, UpdateType } from "./interfaces";
 import { ReservedProps, ListenerProps } from "./dom";
 
 const ReactInstanceMap = new WeakMap<object, ReactClassComponent>();
@@ -21,9 +21,10 @@ export class Component<P = {}, S = {}> {
 }
 
 export abstract class ReactComponent {
-  protected _instantiateComponent: (reactEl: ReactElement) => ReactComponent;
+  protected _instantiateComponent: (reactEl: Child) => ReactComponent;
   public _curElement: Child;
-  protected _hostNode: HTMLElement | Text;
+  public _hostNode: HTMLElement | Text;
+  public _mountIndex: number;
 
   constructor(reactEl: Child) {
     this._curElement = reactEl;
@@ -46,12 +47,29 @@ export class ReactTextComponent extends ReactComponent {
     return node;
   }
 
-  receiveComponent(nextEl: string | number) {}
+  receiveComponent(nextEl: string | number) {
+    const prevEl = this._curElement;
+    if (prevEl === nextEl) {
+      return;
+    }
+    this._curElement = nextEl;
+    this.replaceText(nextEl);
+  }
+
+  replaceText(nextEl: string | number) {
+    const parentNode = this._hostNode.parentNode;
+    while (parentNode.firstChild) {
+      parentNode.removeChild(parentNode.firstChild);
+    }
+    const node = document.createTextNode(nextEl.toString());
+    this._hostNode = node;
+    parentNode.appendChild(node);
+  }
 }
 
 export class ReactDOMComponent extends ReactComponent {
   public _curElement: ReactElement;
-  protected _renderedChildren: { [name: string]: ReactComponent };
+  protected _renderedChildren: { [index: string]: ReactComponent };
 
   constructor(reactEl: ReactElement) {
     super(reactEl);
@@ -62,14 +80,103 @@ export class ReactDOMComponent extends ReactComponent {
     const node = document.createElement(element.type as string);
     this._hostNode = node;
     this.updateDOMProps(null, element.props);
-    const children: Array<Child> = element.props.children;
-    this.appendChildrenNodes(children);
+    this.mountChildren(element.props.children);
     return node;
   }
 
   receiveComponent(nextEl: ReactElement) {
     const prevEl = this._curElement;
     this.updateDOMProps(prevEl.props, nextEl.props);
+    this.updateChildren(nextEl.props.children);
+  }
+
+  updateChildren(children: Array<Child>) {
+    const prevChildren = this._renderedChildren;
+    const nextElements: { [index: string]: Child } = {};
+    children.forEach((child, i) => {
+      const index = this.getChildIndex(child, i);
+      nextElements[index] = child;
+    });
+    const nextChildren: { [index: string]: ReactComponent } = {};
+    const queue: Array<{
+      type: UpdateType;
+      node: HTMLElement | Text;
+      afterNode?: HTMLElement | Text;
+    }> = [];
+    this.diff(prevChildren, nextElements, nextChildren, queue);
+    this._renderedChildren = nextChildren;
+    this.processQueue(this._hostNode as HTMLElement, queue);
+  }
+
+  processQueue(
+    parentNode: HTMLElement,
+    queue: Array<{
+      type: UpdateType;
+      node: HTMLElement | Text;
+      afterNode?: HTMLElement | Text;
+    }>
+  ) {
+    queue.forEach(({ type, node, afterNode }) => {
+      switch (type) {
+        case UpdateType.Remove: {
+          parentNode.removeChild(node);
+          break;
+        }
+        case UpdateType.Insert: {
+          const referenceNode = afterNode
+            ? afterNode.nextSibling
+            : parentNode.firstChild;
+          parentNode.insertBefore(node, referenceNode);
+          break;
+        }
+      }
+    });
+  }
+
+  diff(
+    prevChildren: { [index: string]: ReactComponent },
+    nextElements: { [index: string]: Child },
+    nextChildren: { [index: string]: ReactComponent },
+    queue: Array<{
+      type: UpdateType;
+      node: HTMLElement | Text;
+      afterNode?: HTMLElement | Text;
+    }>
+  ) {
+    let lastNode: HTMLElement | Text;
+    Object.entries(nextElements).forEach(([index, nextEl], i) => {
+      const prevComponent = prevChildren[index];
+      if (
+        prevComponent &&
+        onlyUpdateComponent(prevComponent._curElement, nextEl)
+      ) {
+        prevComponent.receiveComponent(nextEl);
+        prevComponent._mountIndex = i;
+        nextChildren[index] = prevComponent;
+        lastNode = prevComponent._hostNode;
+      } else {
+        if (prevComponent) {
+          queue.push({
+            type: UpdateType.Remove,
+            node: prevComponent._hostNode
+          });
+        }
+        const nextComponent = this._instantiateComponent(nextEl);
+        nextComponent._mountIndex = i;
+        const nextNode = nextComponent.mountComponent();
+        lastNode = nextNode;
+        queue.push({
+          type: UpdateType.Insert,
+          node: nextNode,
+          afterNode: lastNode
+        });
+      }
+    });
+    Object.entries(prevChildren).forEach(([index, prevComponent]) => {
+      if (!nextChildren.hasOwnProperty(index)) {
+        queue.push({ type: UpdateType.Remove, node: prevComponent._hostNode });
+      }
+    });
   }
 
   updateDOMProps(prevProps, nextProps) {
@@ -102,31 +209,36 @@ export class ReactDOMComponent extends ReactComponent {
         ListenerProps.hasOwnProperty(propKey) &&
         typeof nextProps[propKey] === "function"
       ) {
-        node.addEventListener(ListenerProps[propKey], nextProps[propKey]);
-        if (prevProps[propKey]) {
+        if (prevProps && prevProps[propKey]) {
           node.removeEventListener(ListenerProps[propKey], prevProps[propKey]);
         }
+        node.addEventListener(ListenerProps[propKey], nextProps[propKey]);
       } else {
         node.setAttribute(propKey, nextProps[propKey]);
       }
     }
   }
 
-  appendChildrenNodes(children: Array<Child>) {
+  mountChildren(children: Array<Child>) {
     const node = this._hostNode;
     if (children.length) {
-      children.forEach(child => {
-        if (typeof child === "string" || typeof child === "number") {
-          const textNode = document.createTextNode(child.toString());
-          node.appendChild(textNode);
-        } else if (child instanceof ReactElement) {
-          const childComponent = this._instantiateComponent(child);
-          const childNode = childComponent.mountComponent();
-          node.appendChild(childNode);
-        }
+      if (!this._renderedChildren) {
+        this._renderedChildren = {};
+      }
+      children.forEach((child, i) => {
+        const childComponent = this._instantiateComponent(child);
+        const index = this.getChildIndex(child, i);
+        this._renderedChildren[index] = childComponent;
+        childComponent._mountIndex = i;
+        const childNode = childComponent.mountComponent();
+        node.appendChild(childNode);
       });
     }
   }
+
+  getChildIndex = (reactEl: Child, nextIndex: number): string => {
+    return nextIndex.toString();
+  };
 }
 
 export class ReactClassComponent extends ReactComponent {
