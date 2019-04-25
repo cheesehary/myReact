@@ -10,11 +10,13 @@ export class ReactElement {
   public _rtype: ReactType;
   public type: Function | SFC | string;
   public props: { [prop: string]: any };
+  public key: string;
 
-  constructor({ _rtype, type, props }) {
+  constructor({ _rtype, type, props, key }) {
     this._rtype = _rtype;
     this.type = type;
     this.props = props;
+    this.key = key;
   }
 }
 

@@ -143,7 +143,8 @@ export class ReactDOMComponent extends ReactComponent {
       afterNode?: HTMLElement | Text;
     }>
   ) {
-    let lastNode: HTMLElement | Text;
+    let lastNode: HTMLElement | Text = null;
+    let lastIndex = 0;
     Object.entries(nextElements).forEach(([index, nextEl], i) => {
       const prevComponent = prevChildren[index];
       if (
@@ -151,25 +152,35 @@ export class ReactDOMComponent extends ReactComponent {
         onlyUpdateComponent(prevComponent._curElement, nextEl)
       ) {
         prevComponent.receiveComponent(nextEl);
+        if(prevComponent._mountIndex < lastIndex) {
+          queue.push({
+            type: UpdateType.Insert,
+            node: prevComponent._hostNode,
+            afterNode: lastNode
+          });
+        }
+        lastNode = prevComponent._hostNode;
+        lastIndex = Math.max(lastIndex, prevComponent._mountIndex);
         prevComponent._mountIndex = i;
         nextChildren[index] = prevComponent;
-        lastNode = prevComponent._hostNode;
       } else {
         if (prevComponent) {
           queue.push({
             type: UpdateType.Remove,
             node: prevComponent._hostNode
           });
+          lastIndex = Math.max(lastIndex, prevComponent._mountIndex);
         }
         const nextComponent = this._instantiateComponent(nextEl);
         nextComponent._mountIndex = i;
         const nextNode = nextComponent.mountComponent();
-        lastNode = nextNode;
         queue.push({
           type: UpdateType.Insert,
           node: nextNode,
           afterNode: lastNode
         });
+        lastNode = nextNode;
+        nextChildren[index] = nextComponent;
       }
     });
     Object.entries(prevChildren).forEach(([index, prevComponent]) => {
@@ -237,7 +248,10 @@ export class ReactDOMComponent extends ReactComponent {
   }
 
   getChildIndex = (reactEl: Child, nextIndex: number): string => {
-    return nextIndex.toString();
+    if (reactEl instanceof ReactElement && reactEl.key !== null) {
+      return reactEl.key;
+    }
+    return "" + nextIndex;
   };
 }
 
@@ -331,6 +345,10 @@ function onlyUpdateComponent(prevEl: Child, nextEl: Child): boolean {
   if (typeof prevEl === "string" || typeof prevEl === "number") {
     return typeof nextEl === "string" || typeof nextEl === "number";
   } else {
-    return nextEl instanceof ReactElement && prevEl.type === nextEl.type;
+    return (
+      nextEl instanceof ReactElement &&
+      prevEl.type === nextEl.type &&
+      prevEl.key === nextEl.key
+    );
   }
 }

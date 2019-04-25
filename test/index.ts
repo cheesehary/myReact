@@ -20,16 +20,18 @@ class Counter extends React.Component<{}, { count: number }> {
     const { count } = this.state;
     return ce(
       "div",
-      null,
-      ce("p", null, `the number now is ${count}`),
-      ce("p", null, ce("button", { onClick: this.addOne }, "add one"))
+      {},
+      count < 3
+        ? ce("p", {}, `the number now is ${count}`)
+        : ce('ul', {}, ...Array(count).fill('li').map((item, i) => ce('li', {key: i}, item))),
+      ce("p", {}, ce("button", { onClick: this.addOne }, "add one"))
     );
   }
 }
 
 const Header: SFC<{ name: string }> = ({ name }) => {
   console.log("render Header");
-  return ce("p", null, `hello ${name}!`);
+  return ce("p", {}, `hello ${name}!`);
 };
 
 class App extends React.Component<{}, { name: string }> {
@@ -44,7 +46,7 @@ class App extends React.Component<{}, { name: string }> {
   render() {
     console.log("render App");
     const { name } = this.state;
-    return ce("div", null, ce(Header, { name }), ce(Counter));
+    return ce("div", {}, ce(Header, { name }), ce(Counter));
   }
 }
 
