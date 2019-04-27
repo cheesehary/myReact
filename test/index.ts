@@ -22,7 +22,7 @@ class Counter extends React.Component<{}, { count: number }> {
       "div",
       {},
       count < 3
-        ? ce("p", {}, `the number now is ${count}`)
+        ? ce("p", {}, `the number now is `, `${count}`)
         : ce('ul', {}, ...Array(count).fill('li').map((item, i) => ce('li', {key: i}, item))),
       ce("p", {}, ce("button", { onClick: this.addOne }, "add one"))
     );

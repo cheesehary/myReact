@@ -20,11 +20,20 @@ export class ReactElement {
   }
 }
 
-export interface SFC<P={}> {
+export interface SFC<P = {}> {
   (props: Readonly<P>): ReactElement;
 }
 
 export enum UpdateType {
   Insert,
   Remove
+}
+
+export interface IComponent<P = {}, S = {}> {
+  (props: Readonly<P>): void;
+  props: Readonly<P>;
+  state: Readonly<S>;
+  setState: (partialState: Partial<S>) => void;
+  render: () => ReactElement;
+  componentWillMount: () => void;
 }

@@ -1,0 +1,191 @@
+import { ReactElement, Child, UpdateType } from "./interfaces";
+import { ReservedProps, ListenerProps } from "./dom";
+import ReactComponent from "./ReactComponent";
+
+export default class ReactDOMComponent extends ReactComponent {
+  public _curElement: ReactElement;
+  protected _renderedChildren: { [index: string]: ReactComponent };
+
+  constructor(reactEl: ReactElement) {
+    super(reactEl);
+  }
+
+  mountComponent(): HTMLElement {
+    const element = this._curElement;
+    const node = document.createElement(element.type as string);
+    this._hostNode = node;
+    this.updateDOMProps(null, element.props);
+    this.mountChildren(element.props.children);
+    return node;
+  }
+
+  receiveComponent(nextEl: ReactElement) {
+    const prevEl = this._curElement;
+    this.updateDOMProps(prevEl.props, nextEl.props);
+    this.updateChildren(nextEl.props.children);
+  }
+
+  updateChildren(children: Array<Child>) {
+    const prevChildren = this._renderedChildren;
+    const nextElements: { [index: string]: Child } = {};
+    children.forEach((child, i) => {
+      const index = this.getChildIndex(child, i);
+      nextElements[index] = child;
+    });
+    const nextChildren: { [index: string]: ReactComponent } = {};
+    const queue: Array<{
+      type: UpdateType;
+      node: HTMLElement | Text;
+      afterNode?: HTMLElement | Text;
+    }> = [];
+    this.diff(prevChildren, nextElements, nextChildren, queue);
+    this._renderedChildren = nextChildren;
+    this.processQueue(this._hostNode as HTMLElement, queue);
+  }
+
+  processQueue(
+    parentNode: HTMLElement,
+    queue: Array<{
+      type: UpdateType;
+      node: HTMLElement | Text;
+      afterNode?: HTMLElement | Text;
+    }>
+  ) {
+    queue.forEach(({ type, node, afterNode }) => {
+      switch (type) {
+        case UpdateType.Remove: {
+          parentNode.removeChild(node);
+          break;
+        }
+        case UpdateType.Insert: {
+          const referenceNode = afterNode
+            ? afterNode.nextSibling
+            : parentNode.firstChild;
+          parentNode.insertBefore(node, referenceNode);
+          break;
+        }
+      }
+    });
+  }
+
+  diff(
+    prevChildren: { [index: string]: ReactComponent },
+    nextElements: { [index: string]: Child },
+    nextChildren: { [index: string]: ReactComponent },
+    queue: Array<{
+      type: UpdateType;
+      node: HTMLElement | Text;
+      afterNode?: HTMLElement | Text;
+    }>
+  ) {
+    let lastNode: HTMLElement | Text = null;
+    let lastIndex = 0;
+    Object.entries(nextElements).forEach(([index, nextEl], i) => {
+      const prevComponent = prevChildren[index];
+      if (
+        prevComponent &&
+        this.onlyUpdateComponent(prevComponent._curElement, nextEl)
+      ) {
+        prevComponent.receiveComponent(nextEl);
+        if (prevComponent._mountIndex < lastIndex) {
+          queue.push({
+            type: UpdateType.Insert,
+            node: prevComponent._hostNode,
+            afterNode: lastNode
+          });
+        }
+        lastNode = prevComponent._hostNode;
+        lastIndex = Math.max(lastIndex, prevComponent._mountIndex);
+        prevComponent._mountIndex = i;
+        nextChildren[index] = prevComponent;
+      } else {
+        if (prevComponent) {
+          queue.push({
+            type: UpdateType.Remove,
+            node: prevComponent._hostNode
+          });
+          lastIndex = Math.max(lastIndex, prevComponent._mountIndex);
+        }
+        const nextComponent = this._instantiateComponent(nextEl);
+        nextComponent._mountIndex = i;
+        const nextNode = nextComponent.mountComponent();
+        queue.push({
+          type: UpdateType.Insert,
+          node: nextNode,
+          afterNode: lastNode
+        });
+        lastNode = nextNode;
+        nextChildren[index] = nextComponent;
+      }
+    });
+    Object.entries(prevChildren).forEach(([index, prevComponent]) => {
+      if (!nextChildren.hasOwnProperty(index)) {
+        queue.push({ type: UpdateType.Remove, node: prevComponent._hostNode });
+      }
+    });
+  }
+
+  updateDOMProps(prevProps, nextProps) {
+    const node = this._hostNode as HTMLElement;
+    for (let propKey in prevProps) {
+      if (
+        nextProps.hasOwnProperty(propKey) ||
+        !prevProps.hasOwnProperty(propKey) ||
+        prevProps[propKey] == null
+      ) {
+        continue;
+      }
+      if (
+        ListenerProps.hasOwnProperty(propKey) &&
+        typeof prevProps[propKey] === "function"
+      ) {
+        node.removeEventListener(ListenerProps[propKey], prevProps[propKey]);
+      } else {
+        node.removeAttribute(propKey);
+      }
+    }
+    for (let propKey in nextProps) {
+      if (
+        ReservedProps.hasOwnProperty(propKey) ||
+        !nextProps.hasOwnProperty(propKey)
+      ) {
+        continue;
+      }
+      if (
+        ListenerProps.hasOwnProperty(propKey) &&
+        typeof nextProps[propKey] === "function"
+      ) {
+        if (prevProps && prevProps[propKey]) {
+          node.removeEventListener(ListenerProps[propKey], prevProps[propKey]);
+        }
+        node.addEventListener(ListenerProps[propKey], nextProps[propKey]);
+      } else {
+        node.setAttribute(propKey, nextProps[propKey]);
+      }
+    }
+  }
+
+  mountChildren(children: Array<Child>) {
+    const node = this._hostNode;
+    if (children.length) {
+      if (!this._renderedChildren) {
+        this._renderedChildren = {};
+      }
+      children.forEach((child, i) => {
+        const childComponent = this._instantiateComponent(child);
+        const index = this.getChildIndex(child, i);
+        this._renderedChildren[index] = childComponent;
+        childComponent._mountIndex = i;
+        const childNode = childComponent.mountComponent();
+        node.appendChild(childNode);
+      });
+    }
+  }
+
+  getChildIndex = (reactEl: Child, nextIndex: number): string => {
+    if (reactEl instanceof ReactElement && reactEl.key !== null) {
+      return reactEl.key;
+    }
+    return "" + nextIndex;
+  };
+}

@@ -1,14 +1,14 @@
 import { ReactType, ReactElement, Child } from "./interfaces";
-import { Component } from "./Component";
+import Component from "./Component";
 
 function createElement(
   type: ReactElement["type"],
-  config: {[key: string]: any} = {},
+  config: { [key: string]: any } = {},
   ...children: Array<Child>
 ): ReactElement {
   let key = null;
-  if(config.key !== undefined) {
-    key = '' + config.key;
+  if (config.key !== undefined) {
+    key = "" + config.key;
   }
   const props: ReactElement["props"] = { ...config };
   delete props.key;

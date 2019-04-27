@@ -1,12 +1,9 @@
 import { ReactType, ReactElement, Child } from "./interfaces";
-import {
-  Component,
-  ReactComponent,
-  ReactDOMComponent,
-  ReactClassComponent,
-  ReactFunctionalComponent,
-  ReactTextComponent
-} from "./Component";
+import ReactComponent from "./ReactComponent";
+import ReactDOMComponent from "./ReactDOMComponent";
+import ReactClassComponent from "./ReactClassComponent";
+import ReactFunctionalComponent from "./ReactFunctionalComponent";
+import ReactTextComponent from "./ReactTextComponent";
 
 function render(reactEl: ReactElement, container: HTMLElement) {
   const component = instantiateComponent(reactEl);
@@ -17,7 +14,7 @@ function render(reactEl: ReactElement, container: HTMLElement) {
 export default render;
 
 function instantiateComponent(reactEl: Child) {
-  if(reactEl instanceof ReactElement) {
+  if (reactEl instanceof ReactElement) {
     switch (reactEl._rtype) {
       case ReactType.Dom: {
         return new ReactDOMComponent(reactEl);
