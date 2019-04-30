@@ -20,7 +20,7 @@ export default class ReactClassComponent extends ReactComponent {
     this._instance = inst;
     ReactInstanceMap.set(inst, this);
     if(inst.componentWillMount) {
-
+      inst.componentWillMount();
     }
     const renderedEl = inst.render();
     const childComponent = this._instantiateComponent(renderedEl);
