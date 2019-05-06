@@ -1,7 +1,7 @@
 import { ReactElement } from "./interfaces";
 import ReactInstanceMap from "./ReactInstanceMap";
 
-export default class Component<P = {}, S = {}> {
+export default abstract class Component<P = {}, S = {}> {
   public props: Readonly<P>;
   public state: Readonly<S>;
 
@@ -13,7 +13,5 @@ export default class Component<P = {}, S = {}> {
     component._pendingState = partialState;
     component.updateComponent(component._curElement, component._curElement);
   }
-  render(): ReactElement {
-    return;
-  }
+  abstract render(): ReactElement;
 }

@@ -30,10 +30,9 @@ export enum UpdateType {
 }
 
 export interface IComponent<P = {}, S = {}> {
-  (props: Readonly<P>): void;
   props: Readonly<P>;
   state: Readonly<S>;
   setState: (partialState: Partial<S>) => void;
   render: () => ReactElement;
-  componentWillMount: () => void;
+  componentWillMount?: () => void;
 }
