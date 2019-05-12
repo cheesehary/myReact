@@ -19,7 +19,7 @@ export default class ReactClassComponent extends ReactComponent {
     const inst: IComponent = new type(element.props);
     this._instance = inst;
     ReactInstanceMap.set(inst, this);
-    if(inst.componentWillMount) {
+    if (inst.componentWillMount) {
       inst.componentWillMount();
     }
     const renderedEl = inst.render();
@@ -39,7 +39,17 @@ export default class ReactClassComponent extends ReactComponent {
     const nextRenderedEl = inst.render();
     if (this.onlyUpdateComponent(prevRenderedEl, nextRenderedEl)) {
       prevRenderedComponent.receiveComponent(nextRenderedEl);
+    } else {
+      const nextRenderedComponent = this._instantiateComponent(nextRenderedEl);
+      const newNode = nextRenderedComponent.mountComponent();
+      const oldNode = prevRenderedComponent._hostNode;
+      this._renderedComponent = nextRenderedComponent;
+      oldNode.parentNode.replaceChild(newNode, oldNode);
     }
+  }
+
+  replaceComponent() {
+    const oldNode = this._hostNode;
   }
 
   receiveComponent(nextEl: ReactElement) {

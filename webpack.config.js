@@ -4,7 +4,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: {
-    app: "./test/index.ts"
+    app: "./test/v15.js"
   },
   output: {
     filename: "[name].[hash].js",
@@ -16,11 +16,16 @@ module.exports = {
         test: /\.ts$/,
         use: "ts-loader",
         exclude: /node_modules/
+      },
+      {
+        test: /\.js$/,
+        use: "babel-loader",
+        exclude: /node_modules/
       }
     ]
   },
   resolve: {
-    extensions: [".ts"]
+    extensions: [".ts", ".js"]
   },
   plugins: [
     new HtmlWebpackPlugin({ template: "./test/index.html" }),
