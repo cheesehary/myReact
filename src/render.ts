@@ -4,11 +4,11 @@ import ReactDOMComponent from "./ReactDOMComponent";
 import ReactClassComponent from "./ReactClassComponent";
 import ReactFunctionalComponent from "./ReactFunctionalComponent";
 import ReactTextComponent from "./ReactTextComponent";
-import { ReconcileTransaction } from "./Transaction";
+import { MountTransaction } from "./reconciler";
 
 function render(reactEl: ReactElement, container: HTMLElement) {
   const component = instantiateComponent(reactEl);
-  const transaction = new ReconcileTransaction();
+  const transaction = new MountTransaction();
   const node = transaction.perform(component.mountComponent, component);
   container.insertBefore(node, null);
 }

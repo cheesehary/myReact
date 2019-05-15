@@ -1,4 +1,4 @@
-abstract class Transaction {
+export default abstract class Transaction {
   protected initData: Array<any>;
   protected wrappers: Array<{ initialize: Function; close: Function }>;
 
@@ -67,24 +67,3 @@ abstract class Transaction {
 }
 
 const WrapperError = "wrapper_error";
-
-export class ReconcileTransaction extends Transaction {
-  private mountQueue: Array<Function>;
-
-  constructor() {
-    super([DOMReady]);
-  }
-
-  enqueue(fn: Function) {
-    this.mountQueue.push(fn);
-  }
-}
-
-const DOMReady = {
-  initialize: function() {
-    this.mountQueue = [];
-  },
-  close: function() {
-    this.mountQueue.forEach(fn => fn());
-  }
-};
