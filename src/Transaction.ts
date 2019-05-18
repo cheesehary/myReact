@@ -1,6 +1,6 @@
-export default abstract class Transaction {
-  protected initData: Array<any>;
-  protected wrappers: Array<{ initialize: Function; close: Function }>;
+export default class Transaction {
+  private initData: Array<any>;
+  private wrappers: Array<{ initialize: Function; close: Function }>;
 
   constructor(wrappers) {
     this.initData = [];
@@ -25,7 +25,7 @@ export default abstract class Transaction {
     return ret;
   }
 
-  initializeAll(from: number) {
+  private initializeAll(from: number) {
     const wrappers = this.wrappers;
     for (let i = from; i < wrappers.length; i++) {
       const wrapper = wrappers[i];
@@ -44,7 +44,7 @@ export default abstract class Transaction {
     }
   }
 
-  closeAll(from: number) {
+  private closeAll(from: number) {
     const wrappers = this.wrappers;
     for (let i = from; i < wrappers.length; i++) {
       const wrapper = wrappers[i];
@@ -57,7 +57,7 @@ export default abstract class Transaction {
       } finally {
         if (error) {
           try {
-            this.initializeAll(i + 1);
+            this.closeAll(i + 1);
           } catch (e) {}
         }
       }

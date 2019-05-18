@@ -1,3 +1,3 @@
-import ReactClassComponent from "./ReactClassComponent";
+import { IReactClassComponent, IComponent } from "./interfaces";
 
-export default new WeakMap<object, ReactClassComponent>();
+export default new WeakMap<IComponent, IReactClassComponent>();

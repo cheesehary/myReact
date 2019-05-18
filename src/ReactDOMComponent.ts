@@ -1,31 +1,33 @@
 import { ReactElement, Child, UpdateType } from "./interfaces";
 import { ReservedProps, ListenerProps } from "./dom";
 import ReactComponent from "./ReactComponent";
+import { MountTransaction } from "./reconciler";
 
 export default class ReactDOMComponent extends ReactComponent {
   public _curElement: ReactElement;
-  protected _renderedChildren: { [index: string]: ReactComponent };
+  private _hostNode: HTMLElement;
+  private _renderedChildren: { [index: string]: ReactComponent };
 
   constructor(reactEl: ReactElement) {
     super(reactEl);
   }
 
-  mountComponent(): HTMLElement {
+  mountComponent(transaction: MountTransaction): HTMLElement {
     const element = this._curElement;
     const node = document.createElement(element.type as string);
     this._hostNode = node;
     this.updateDOMProps(null, element.props);
-    this.mountChildren(element.props.children);
+    this.mountChildren(transaction, element.props.children);
     return node;
   }
 
-  receiveComponent(nextEl: ReactElement) {
+  receiveComponent(transaction: MountTransaction, nextEl: ReactElement) {
     const prevEl = this._curElement;
     this.updateDOMProps(prevEl.props, nextEl.props);
-    this.updateChildren(nextEl.props.children);
+    this.updateChildren(transaction, nextEl.props.children);
   }
 
-  updateChildren(children: Array<Child>) {
+  updateChildren(transaction: MountTransaction, children: Array<Child>) {
     const prevChildren = this._renderedChildren;
     const nextElements: { [index: string]: Child } = {};
     children.forEach((child, i) => {
@@ -38,9 +40,9 @@ export default class ReactDOMComponent extends ReactComponent {
       node: HTMLElement | Text;
       afterNode?: HTMLElement | Text;
     }> = [];
-    this.diff(prevChildren, nextElements, nextChildren, queue);
+    this.diff(transaction, prevChildren, nextElements, nextChildren, queue);
     this._renderedChildren = nextChildren;
-    this.processQueue(this._hostNode as HTMLElement, queue);
+    this.processQueue(this.getHostNode(), queue);
   }
 
   processQueue(
@@ -69,6 +71,7 @@ export default class ReactDOMComponent extends ReactComponent {
   }
 
   diff(
+    transaction: MountTransaction,
     prevChildren: { [index: string]: ReactComponent },
     nextElements: { [index: string]: Child },
     nextChildren: { [index: string]: ReactComponent },
@@ -78,6 +81,7 @@ export default class ReactDOMComponent extends ReactComponent {
       afterNode?: HTMLElement | Text;
     }>
   ) {
+    const unmountQueue: Array<ReactComponent> = [];
     let lastNode: HTMLElement | Text = null;
     let lastIndex = 0;
     Object.entries(nextElements).forEach(([index, nextEl], i) => {
@@ -86,15 +90,15 @@ export default class ReactDOMComponent extends ReactComponent {
         prevComponent &&
         this.onlyUpdateComponent(prevComponent._curElement, nextEl)
       ) {
-        prevComponent.receiveComponent(nextEl);
+        prevComponent.receiveComponent(transaction, nextEl);
         if (prevComponent._mountIndex < lastIndex) {
           queue.push({
             type: UpdateType.Insert,
-            node: prevComponent._hostNode,
+            node: prevComponent.getHostNode(),
             afterNode: lastNode
           });
         }
-        lastNode = prevComponent._hostNode;
+        lastNode = prevComponent.getHostNode();
         lastIndex = Math.max(lastIndex, prevComponent._mountIndex);
         prevComponent._mountIndex = i;
         nextChildren[index] = prevComponent;
@@ -102,13 +106,14 @@ export default class ReactDOMComponent extends ReactComponent {
         if (prevComponent) {
           queue.push({
             type: UpdateType.Remove,
-            node: prevComponent._hostNode
+            node: prevComponent.getHostNode()
           });
+          unmountQueue.push(prevComponent);
           lastIndex = Math.max(lastIndex, prevComponent._mountIndex);
         }
         const nextComponent = this._instantiateComponent(nextEl);
         nextComponent._mountIndex = i;
-        const nextNode = nextComponent.mountComponent();
+        const nextNode = nextComponent.mountComponent(transaction);
         queue.push({
           type: UpdateType.Insert,
           node: nextNode,
@@ -120,13 +125,18 @@ export default class ReactDOMComponent extends ReactComponent {
     });
     Object.entries(prevChildren).forEach(([index, prevComponent]) => {
       if (!nextChildren.hasOwnProperty(index)) {
-        queue.push({ type: UpdateType.Remove, node: prevComponent._hostNode });
+        queue.push({
+          type: UpdateType.Remove,
+          node: prevComponent.getHostNode()
+        });
+        unmountQueue.push(prevComponent);
       }
     });
+    unmountQueue.forEach(component => component.unmountComponent());
   }
 
   updateDOMProps(prevProps, nextProps) {
-    const node = this._hostNode as HTMLElement;
+    const node = this.getHostNode();
     for (let propKey in prevProps) {
       if (
         nextProps.hasOwnProperty(propKey) ||
@@ -165,8 +175,8 @@ export default class ReactDOMComponent extends ReactComponent {
     }
   }
 
-  mountChildren(children: Array<Child>) {
-    const node = this._hostNode;
+  mountChildren(transaction: MountTransaction, children: Array<Child>) {
+    const node = this.getHostNode();
     if (children.length) {
       if (!this._renderedChildren) {
         this._renderedChildren = {};
@@ -176,7 +186,7 @@ export default class ReactDOMComponent extends ReactComponent {
         const index = this.getChildIndex(child, i);
         this._renderedChildren[index] = childComponent;
         childComponent._mountIndex = i;
-        const childNode = childComponent.mountComponent();
+        const childNode = childComponent.mountComponent(transaction);
         node.appendChild(childNode);
       });
     }
@@ -188,4 +198,28 @@ export default class ReactDOMComponent extends ReactComponent {
     }
     return "" + nextIndex;
   };
+
+  getHostNode(): HTMLElement {
+    return this._hostNode;
+  }
+
+  unmountComponent() {
+    const node = this.getHostNode();
+    const props = this._curElement.props;
+    for (let propKey in props) {
+      if (
+        ListenerProps.hasOwnProperty(propKey) &&
+        typeof props[propKey] === "function"
+      ) {
+        node.removeEventListener(ListenerProps[propKey], props[propKey]);
+      }
+    }
+    const renderedChildren = this._renderedChildren;
+    for (let index in renderedChildren) {
+      renderedChildren[index].unmountComponent();
+    }
+    this._curElement = null;
+    this._renderedChildren = null;
+    this._hostNode = null;
+  }
 }

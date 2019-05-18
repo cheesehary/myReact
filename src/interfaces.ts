@@ -35,4 +35,39 @@ export interface IComponent<P = {}, S = {}> {
   setState: (partialState: Partial<S>) => void;
   render: () => ReactElement;
   componentWillMount?: () => void;
+  componentDidMount?: () => void;
+  componentWillReceiveProps?: (nextProps: P) => void;
+  shouldComponentUpdate?: (nextProps: P, nextState: S) => boolean;
+  componentWillUpdate?: (nextProps: P, nextState: S) => void;
+  componentDidUpdate?: (prevProps: P, prevState: S) => void;
+  componentWillUnmount?: () => void;
+}
+
+export interface IReactComponent {
+  _curElement: Child;
+  _mountIndex: number;
+  mountComponent: (transaction: IMountTransaction) => HTMLElement | Text;
+  receiveComponent: (transaction: IMountTransaction, nextEl: Child) => void;
+  unmountComponent: () => void;
+  getHostNode: () => HTMLElement | Text;
+}
+
+export interface IReactClassComponent extends IReactComponent {
+  _curElement: ReactElement;
+  _instance: IComponent;
+  _pendingStates: Array<Object | Function>;
+  _pendingCallbacks: Array<Function>;
+  _mountOrder: number;
+  updateComponent: (
+    transaction: IMountTransaction,
+    prevEl: ReactElement,
+    nextEl: ReactElement
+  ) => void;
+  processPendingStates: () => object;
+  updateComponentIfNecessary: (transaction: IMountTransaction) => void;
+}
+
+interface IMountTransaction {
+  perform: (fn: Function, context: any, ...args) => any;
+  enqueue: (fn: Function) => void;
 }

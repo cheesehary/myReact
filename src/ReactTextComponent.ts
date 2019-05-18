@@ -1,7 +1,9 @@
 import ReactComponent from "./ReactComponent";
+import { MountTransaction } from "./reconciler";
 
 export default class ReactTextComponent extends ReactComponent {
   public _curElement: number | string;
+  private _hostNode: Text;
 
   constructor(reactEl: number | string) {
     super(reactEl);
@@ -14,7 +16,7 @@ export default class ReactTextComponent extends ReactComponent {
     return node;
   }
 
-  receiveComponent(nextEl: string | number) {
+  receiveComponent(transaction: MountTransaction, nextEl: string | number) {
     const prevEl = this._curElement;
     if (prevEl === nextEl) {
       return;
@@ -30,6 +32,14 @@ export default class ReactTextComponent extends ReactComponent {
     parentNode.insertBefore(node, prevNode);
     parentNode.removeChild(prevNode);
     this._hostNode = node;
-    parentNode.appendChild(node);
+  }
+
+  getHostNode() {
+    return this._hostNode;
+  }
+
+  unmountComponent() {
+    this._curElement = null;
+    this._hostNode = null;
   }
 }
