@@ -9,7 +9,10 @@ export default abstract class Component<P = {}, S = {}> {
   constructor(props: Readonly<P>) {
     this.props = props;
   }
-  setState(partialState: Partial<S> | Function, callback?: Function) {
+  setState(
+    partialState: Partial<S> | ((state: S, props: P) => Partial<S>),
+    callback?: Function
+  ) {
     const component = ReactInstanceMap.get(this);
     const queue = component._pendingStates || (component._pendingStates = []);
     queue.push(partialState);
