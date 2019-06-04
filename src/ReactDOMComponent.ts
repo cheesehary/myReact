@@ -2,28 +2,35 @@ import { ReactElement, Child, UpdateType } from "./interfaces";
 import { ReservedProps, ListenerProps } from "./dom";
 import ReactComponent from "./ReactComponent";
 import { MountTransaction } from "./reconciler";
+import { listenTo, setListener } from "./SyntheticEvent";
+
+let nextUniKey = 0;
+const internalComponent = "_ReactDOMComponent";
 
 export default class ReactDOMComponent extends ReactComponent {
   public _curElement: ReactElement;
   private _hostNode: HTMLElement;
   private _renderedChildren: { [index: string]: ReactComponent };
+  private _uniKey: number;
 
   constructor(reactEl: ReactElement) {
     super(reactEl);
   }
 
   mountComponent(transaction: MountTransaction): HTMLElement {
+    this._uniKey = nextUniKey++;
     const element = this._curElement;
     const node = document.createElement(element.type as string);
+    node[internalComponent] = this;
     this._hostNode = node;
-    this.updateDOMProps(null, element.props);
+    this.updateDOMProps(transaction, null, element.props);
     this.mountChildren(transaction, element.props.children);
     return node;
   }
 
   receiveComponent(transaction: MountTransaction, nextEl: ReactElement) {
     const prevEl = this._curElement;
-    this.updateDOMProps(prevEl.props, nextEl.props);
+    this.updateDOMProps(transaction, prevEl.props, nextEl.props);
     this.updateChildren(transaction, nextEl.props.children);
   }
 
@@ -135,7 +142,7 @@ export default class ReactDOMComponent extends ReactComponent {
     unmountQueue.forEach(component => component.unmountComponent());
   }
 
-  updateDOMProps(prevProps, nextProps) {
+  updateDOMProps(transaction: MountTransaction, prevProps, nextProps) {
     const node = this.getHostNode();
     for (let propKey in prevProps) {
       if (
@@ -169,6 +176,15 @@ export default class ReactDOMComponent extends ReactComponent {
           node.removeEventListener(ListenerProps[propKey], prevProps[propKey]);
         }
         node.addEventListener(ListenerProps[propKey], nextProps[propKey]);
+        listenTo(ListenerProps[propKey]);
+        transaction.enqueue(
+          setListener.bind(
+            null,
+            this._uniKey,
+            ListenerProps[propKey],
+            nextProps[propKey]
+          )
+        );
       } else {
         node.setAttribute(propKey, nextProps[propKey]);
       }
@@ -201,6 +217,10 @@ export default class ReactDOMComponent extends ReactComponent {
 
   getHostNode(): HTMLElement {
     return this._hostNode;
+  }
+
+  getComponentFromNode(node: HTMLElement): ReactDOMComponent {
+    return node[internalComponent];
   }
 
   unmountComponent() {
