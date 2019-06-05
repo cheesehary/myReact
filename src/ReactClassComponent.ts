@@ -34,6 +34,9 @@ export default class ReactClassComponent extends ReactComponent
     if (inst.componentWillMount) {
       inst.componentWillMount();
     }
+    if (this._pendingStates) {
+      this.processPendingStates();
+    }
     const renderedEl = inst.render();
     const childComponent = this._instantiateComponent(renderedEl);
     this._renderedComponent = childComponent;

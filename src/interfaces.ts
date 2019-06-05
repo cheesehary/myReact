@@ -70,6 +70,11 @@ export interface IReactClassComponent extends IReactComponent {
   updateComponentIfNecessary: (transaction: IMountTransaction) => void;
 }
 
+export interface IReactDOMComponent extends IReactComponent {
+  getComponentFromNode: (node: HTMLElement) => IReactDOMComponent;
+  getUniKey: () => number;
+}
+
 interface IMountTransaction {
   perform: (fn: Function, context: any, ...args) => any;
   enqueue: (fn: Function) => void;

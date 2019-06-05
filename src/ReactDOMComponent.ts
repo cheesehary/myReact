@@ -119,6 +119,7 @@ export default class ReactDOMComponent extends ReactComponent {
           lastIndex = Math.max(lastIndex, prevComponent._mountIndex);
         }
         const nextComponent = this._instantiateComponent(nextEl);
+        nextComponent._parentComponent = this;
         nextComponent._mountIndex = i;
         const nextNode = nextComponent.mountComponent(transaction);
         queue.push({
@@ -199,6 +200,7 @@ export default class ReactDOMComponent extends ReactComponent {
       }
       children.forEach((child, i) => {
         const childComponent = this._instantiateComponent(child);
+        childComponent._parentComponent = this;
         const index = this.getChildIndex(child, i);
         this._renderedChildren[index] = childComponent;
         childComponent._mountIndex = i;
@@ -223,6 +225,10 @@ export default class ReactDOMComponent extends ReactComponent {
     return node[internalComponent];
   }
 
+  getUniKey(): number {
+    return this._uniKey;
+  }
+
   unmountComponent() {
     const node = this.getHostNode();
     const props = this._curElement.props;
@@ -241,5 +247,6 @@ export default class ReactDOMComponent extends ReactComponent {
     this._curElement = null;
     this._renderedChildren = null;
     this._hostNode = null;
+    node[internalComponent] = null;
   }
 }

@@ -1,10 +1,11 @@
-import { Child, ReactElement } from "./interfaces";
+import { Child, ReactElement, IReactDOMComponent } from "./interfaces";
 import { MountTransaction } from "./reconciler";
 
 export default abstract class ReactComponent {
   protected _instantiateComponent: (reactEl: Child) => ReactComponent;
   public _curElement: Child;
   public _mountIndex: number;
+  public _parentComponent: IReactDOMComponent;
 
   constructor(reactEl: Child) {
     this._curElement = reactEl;
