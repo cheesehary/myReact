@@ -11,25 +11,38 @@ class Counter extends React.Component {
     console.log("constructor Counter");
   }
 
-  componentDidMount() {
-    console.log("component did mount");
+  // componentDidMount() {
+  //   console.log("component did mount");
+  //   this.setState({ count: this.state.count + 1 });
+  //   console.log(this.state.count);
+  //   this.setState({ count: this.state.count + 1 });
+  //   console.log(this.state.count);
+  //   // Promise.resolve().then(() => {
+  //   //   console.log("component did mount");
+  //   //   console.log(this.state.count);
+  //   //   this.setState({ count: this.state.count + 1 });
+  //   //   console.log(this.state.count);
+  //   //   this.setState({ count: this.state.count + 1 });
+  //   //   console.log(this.state.count);
+  //   // });
+  // }
+
+  componentWillMount() {
     this.setState({ count: this.state.count + 1 });
     console.log(this.state.count);
-    this.setState({ count: this.state.count + 1 });
-    console.log(this.state.count);
-    // Promise.resolve().then(() => {
-    //   console.log("component did mount");
-    //   console.log(this.state.count);
-    //   this.setState({ count: this.state.count + 1 });
-    //   console.log(this.state.count);
-    //   this.setState({ count: this.state.count + 1 });
-    //   console.log(this.state.count);
-    // });
   }
 
   addOne = () => {
-    this.setState({ count: this.state.count + 1 });
-    console.log(this.state.count);
+    // this.setState({ count: this.state.count + 1 });
+    // console.log(this.state.count);
+    // this.setState({ count: this.state.count + 1 });
+    // console.log(this.state.count);
+    Promise.resolve().then(() => {
+      this.setState({ count: this.state.count + 1 });
+      console.log(this.state.count);
+      this.setState({ count: this.state.count + 1 });
+      console.log(this.state.count);
+    });
   };
 
   render() {
@@ -38,7 +51,7 @@ class Counter extends React.Component {
     return ce(
       "div",
       {},
-      count < 3
+      count < 5
         ? ce("p", {}, `the number now is `, `${count}`)
         : ce(
             "ul",

@@ -5,7 +5,7 @@ import {
   IReactComponent
 } from "./interfaces";
 import ReactComponent from "./ReactComponent";
-import ReactInstanceMap from "./ReactInstanceMap";
+import { InstanceComponentMap } from "./ReactMap";
 import { MountTransaction } from "./reconciler";
 
 let nextOrder = 0;
@@ -30,12 +30,12 @@ export default class ReactClassComponent extends ReactComponent
     //@ts-ignore
     const inst: IComponent = new type(element.props);
     this._instance = inst;
-    ReactInstanceMap.set(inst, this);
+    InstanceComponentMap.set(inst, this);
     if (inst.componentWillMount) {
       inst.componentWillMount();
     }
     if (this._pendingStates) {
-      this.processPendingStates();
+      inst.state = this.processPendingStates();
     }
     const renderedEl = inst.render();
     const childComponent = this._instantiateComponent(renderedEl);
@@ -150,6 +150,6 @@ export default class ReactClassComponent extends ReactComponent
     this._renderedComponent = null;
     this._pendingStates = null;
     this._pendingCallbacks = null;
-    ReactInstanceMap.delete(inst);
+    InstanceComponentMap.delete(inst);
   }
 }

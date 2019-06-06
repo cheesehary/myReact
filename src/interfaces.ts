@@ -49,6 +49,7 @@ export interface IComponent<P = {}, S = {}> {
 export interface IReactComponent {
   _curElement: Child;
   _mountIndex: number;
+  _parentComponent: IReactDOMComponent;
   mountComponent: (transaction: IMountTransaction) => HTMLElement | Text;
   receiveComponent: (transaction: IMountTransaction, nextEl: Child) => void;
   unmountComponent: () => void;
@@ -71,8 +72,8 @@ export interface IReactClassComponent extends IReactComponent {
 }
 
 export interface IReactDOMComponent extends IReactComponent {
-  getComponentFromNode: (node: HTMLElement) => IReactDOMComponent;
   getUniKey: () => number;
+  getHostNode: () => HTMLElement;
 }
 
 interface IMountTransaction {

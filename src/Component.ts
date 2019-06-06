@@ -1,5 +1,5 @@
 import { ReactElement } from "./interfaces";
-import ReactInstanceMap from "./ReactInstanceMap";
+import { InstanceComponentMap } from "./ReactMap";
 import { enqueueUpdate } from "./reconciler";
 
 export default abstract class Component<P = {}, S = {}> {
@@ -13,7 +13,7 @@ export default abstract class Component<P = {}, S = {}> {
     partialState: Partial<S> | ((state: S, props: P) => Partial<S>),
     callback?: Function
   ) {
-    const component = ReactInstanceMap.get(this);
+    const component = InstanceComponentMap.get(this);
     const queue = component._pendingStates || (component._pendingStates = []);
     queue.push(partialState);
     if (callback) {

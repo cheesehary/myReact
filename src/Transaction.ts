@@ -19,8 +19,9 @@ export default class Transaction {
         try {
           this.closeAll(0);
         } catch (e) {}
+      } else {
+        this.closeAll(0);
       }
-      this.closeAll(0);
     }
     return ret;
   }

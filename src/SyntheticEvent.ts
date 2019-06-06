@@ -1,5 +1,6 @@
 import { batchUpdate } from "./reconciler";
-import {IReactDOMComponent} from './interfaces';
+import { IReactDOMComponent } from "./interfaces";
+import { NodeComponentMap } from "./ReactMap";
 
 const ListenerMap: { [eventType: string]: { [key: string]: Function } } = {};
 const isListening: { [eventType: string]: boolean } = {};
@@ -11,6 +12,17 @@ export function setListener(
 ) {
   const typeMap = ListenerMap[eventType] || (ListenerMap[eventType] = {});
   typeMap[key] = listener;
+}
+
+export function deleteListener(key: number, eventType: string) {
+  const typeMap = ListenerMap[eventType];
+  delete typeMap[key];
+}
+
+export function deleteAllListenersOfComponent(key: number) {
+  Object.values(ListenerMap).forEach(typeMap => {
+    delete typeMap[key];
+  });
 }
 
 export function listenTo(eventType: string) {
@@ -30,14 +42,31 @@ function dispatchNativeEvent(nativeEvt: Event) {
   parentComponents.forEach(component => {
     const eventType = nativeEvt.type;
     const key = component.getUniKey();
-    if(ListenerMap[eventType] && ListenerMap[eventType][key]) {
-      eventQueue.push(new SyntheticEvent())
+    const listener = ListenerMap[eventType] && ListenerMap[eventType][key];
+    if (listener) {
+      eventQueue.push(
+        new SyntheticEvent(nativeEvt, component.getHostNode(), listener)
+      );
     }
-  })
+  });
+  eventQueue.forEach(event => {
+    try {
+      const listener = event.getListener();
+      listener(event);
+    } catch (e) {
+      console.error(e);
+    }
+  });
 }
 
 function findParentComponents(node: HTMLElement): Array<IReactDOMComponent> {
-
+  const parents: Array<IReactDOMComponent> = [];
+  let current = NodeComponentMap.get(node);
+  while (current) {
+    parents.push(current);
+    current = current._parentComponent;
+  }
+  return parents;
 }
 
 class SyntheticEvent {
@@ -46,10 +75,18 @@ class SyntheticEvent {
   public currentTarget: any;
   private listener: Function;
 
-  constructor(nativeEvt: Event, component: IReactDOMComponent) {
+  constructor(
+    nativeEvt: Event,
+    currentTarget: HTMLElement,
+    listener: Function
+  ) {
     this.type = nativeEvt.type;
     this.target = nativeEvt.target;
-    this.currentTarget = component.getHostNode();
-    // this.listener = 
+    this.currentTarget = currentTarget;
+    this.listener = listener;
+  }
+
+  getListener() {
+    return this.listener;
   }
 }

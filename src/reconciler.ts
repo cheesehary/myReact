@@ -70,6 +70,17 @@ class FlushTransaction extends Transaction {
   enqueue(fn: Function) {
     this.callbackQueue.push(fn);
   }
+
+  perform(fn: Function, context, ...args) {
+    return super.perform.call(
+      this,
+      this.mountTransaction.perform,
+      this.mountTransaction,
+      fn,
+      context,
+      ...args
+    );
+  }
 }
 
 const NestedUpdates = {

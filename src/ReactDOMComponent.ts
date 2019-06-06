@@ -2,10 +2,15 @@ import { ReactElement, Child, UpdateType } from "./interfaces";
 import { ReservedProps, ListenerProps } from "./dom";
 import ReactComponent from "./ReactComponent";
 import { MountTransaction } from "./reconciler";
-import { listenTo, setListener } from "./SyntheticEvent";
+import {
+  listenTo,
+  setListener,
+  deleteListener,
+  deleteAllListenersOfComponent
+} from "./SyntheticEvent";
+import { NodeComponentMap } from "./ReactMap";
 
 let nextUniKey = 0;
-const internalComponent = "_ReactDOMComponent";
 
 export default class ReactDOMComponent extends ReactComponent {
   public _curElement: ReactElement;
@@ -21,7 +26,7 @@ export default class ReactDOMComponent extends ReactComponent {
     this._uniKey = nextUniKey++;
     const element = this._curElement;
     const node = document.createElement(element.type as string);
-    node[internalComponent] = this;
+    NodeComponentMap.set(node, this);
     this._hostNode = node;
     this.updateDOMProps(transaction, null, element.props);
     this.mountChildren(transaction, element.props.children);
@@ -157,7 +162,8 @@ export default class ReactDOMComponent extends ReactComponent {
         ListenerProps.hasOwnProperty(propKey) &&
         typeof prevProps[propKey] === "function"
       ) {
-        node.removeEventListener(ListenerProps[propKey], prevProps[propKey]);
+        // node.removeEventListener(ListenerProps[propKey], prevProps[propKey]);
+        deleteListener(this._uniKey, ListenerProps[propKey]);
       } else {
         node.removeAttribute(propKey);
       }
@@ -174,9 +180,10 @@ export default class ReactDOMComponent extends ReactComponent {
         typeof nextProps[propKey] === "function"
       ) {
         if (prevProps && prevProps[propKey]) {
-          node.removeEventListener(ListenerProps[propKey], prevProps[propKey]);
+          // node.removeEventListener(ListenerProps[propKey], prevProps[propKey]);
+          deleteListener(this._uniKey, ListenerProps[propKey]);
         }
-        node.addEventListener(ListenerProps[propKey], nextProps[propKey]);
+        // node.addEventListener(ListenerProps[propKey], nextProps[propKey]);
         listenTo(ListenerProps[propKey]);
         transaction.enqueue(
           setListener.bind(
@@ -221,25 +228,22 @@ export default class ReactDOMComponent extends ReactComponent {
     return this._hostNode;
   }
 
-  getComponentFromNode(node: HTMLElement): ReactDOMComponent {
-    return node[internalComponent];
-  }
-
   getUniKey(): number {
     return this._uniKey;
   }
 
   unmountComponent() {
     const node = this.getHostNode();
-    const props = this._curElement.props;
-    for (let propKey in props) {
-      if (
-        ListenerProps.hasOwnProperty(propKey) &&
-        typeof props[propKey] === "function"
-      ) {
-        node.removeEventListener(ListenerProps[propKey], props[propKey]);
-      }
-    }
+    // const props = this._curElement.props;
+    // for (let propKey in props) {
+    //   if (
+    //     ListenerProps.hasOwnProperty(propKey) &&
+    //     typeof props[propKey] === "function"
+    //   ) {
+    //     node.removeEventListener(ListenerProps[propKey], props[propKey]);
+    //   }
+    // }
+    deleteAllListenersOfComponent(this._uniKey);
     const renderedChildren = this._renderedChildren;
     for (let index in renderedChildren) {
       renderedChildren[index].unmountComponent();
@@ -247,6 +251,6 @@ export default class ReactDOMComponent extends ReactComponent {
     this._curElement = null;
     this._renderedChildren = null;
     this._hostNode = null;
-    node[internalComponent] = null;
+    NodeComponentMap.delete(node);
   }
 }
