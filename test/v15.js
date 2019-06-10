@@ -9,6 +9,7 @@ class Counter extends React.Component {
       count: 0
     };
     console.log("constructor Counter");
+    this.didUpdate = false;
   }
 
   // componentDidMount() {
@@ -27,22 +28,31 @@ class Counter extends React.Component {
   //   // });
   // }
 
-  componentWillMount() {
+  // componentWillMount() {
+  //   this.setState({ count: this.state.count + 1 });
+  //   console.log(this.state.count);
+  // }
+
+  componentDidUpdate() {
+    if(this.didUpdate) {
+      return;
+    }
+    this.didUpdate = true;
     this.setState({ count: this.state.count + 1 });
-    console.log(this.state.count);
+    console.log('did update, ', this.state.count);
   }
 
   addOne = () => {
+    this.setState({ count: this.state.count + 1 });
+    console.log('click, ', this.state.count);
     // this.setState({ count: this.state.count + 1 });
     // console.log(this.state.count);
-    // this.setState({ count: this.state.count + 1 });
-    // console.log(this.state.count);
-    Promise.resolve().then(() => {
-      this.setState({ count: this.state.count + 1 });
-      console.log(this.state.count);
-      this.setState({ count: this.state.count + 1 });
-      console.log(this.state.count);
-    });
+    // Promise.resolve().then(() => {
+    //   this.setState({ count: this.state.count + 1 });
+    //   console.log(this.state.count);
+    //   this.setState({ count: this.state.count + 1 });
+    //   console.log(this.state.count);
+    // });
   };
 
   render() {

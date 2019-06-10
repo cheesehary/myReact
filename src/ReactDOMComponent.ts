@@ -1,4 +1,4 @@
-import { ReactElement, Child, UpdateType } from "./interfaces";
+import { ReactElement, Child, UpdateType, ReactNode } from "./interfaces";
 import { ReservedProps, ListenerProps } from "./dom";
 import ReactComponent from "./ReactComponent";
 import { MountTransaction } from "./reconciler";
@@ -89,12 +89,12 @@ export default class ReactDOMComponent extends ReactComponent {
     nextChildren: { [index: string]: ReactComponent },
     queue: Array<{
       type: UpdateType;
-      node: HTMLElement | Text;
-      afterNode?: HTMLElement | Text;
+      node: ReactNode;
+      afterNode?: ReactNode;
     }>
   ) {
     const unmountQueue: Array<ReactComponent> = [];
-    let lastNode: HTMLElement | Text = null;
+    let lastNode: ReactNode = null;
     let lastIndex = 0;
     Object.entries(nextElements).forEach(([index, nextEl], i) => {
       const prevComponent = prevChildren[index];

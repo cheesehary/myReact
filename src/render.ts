@@ -4,6 +4,7 @@ import ReactDOMComponent from "./ReactDOMComponent";
 import ReactClassComponent from "./ReactClassComponent";
 import ReactFunctionalComponent from "./ReactFunctionalComponent";
 import ReactTextComponent from "./ReactTextComponent";
+import ReactEmptyComponent from "./ReactEmptyComponent";
 import { MountTransaction, batchUpdate } from "./reconciler";
 
 function render(reactEl: ReactElement, container: HTMLElement) {
@@ -20,7 +21,9 @@ function render(reactEl: ReactElement, container: HTMLElement) {
 export default render;
 
 function instantiateComponent(reactEl: Child) {
-  if (reactEl instanceof ReactElement) {
+  if (reactEl === null) {
+    return new ReactEmptyComponent();
+  } else if (reactEl instanceof ReactElement) {
     switch (reactEl._rtype) {
       case ReactType.Dom: {
         return new ReactDOMComponent(reactEl);

@@ -6,6 +6,8 @@ export enum ReactType {
 
 export type Child = ReactElement | string | number;
 
+export type ReactNode = HTMLElement | Text | Comment;
+
 export class ReactElement {
   public _rtype: ReactType;
   public type: Function | SFC | string;
@@ -50,10 +52,10 @@ export interface IReactComponent {
   _curElement: Child;
   _mountIndex: number;
   _parentComponent: IReactDOMComponent;
-  mountComponent: (transaction: IMountTransaction) => HTMLElement | Text;
+  mountComponent: (transaction: IMountTransaction) => ReactNode;
   receiveComponent: (transaction: IMountTransaction, nextEl: Child) => void;
   unmountComponent: () => void;
-  getHostNode: () => HTMLElement | Text;
+  getHostNode: () => ReactNode;
 }
 
 export interface IReactClassComponent extends IReactComponent {

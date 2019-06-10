@@ -2,12 +2,15 @@ import React, { SFC } from "../src";
 const ce = React.createElement;
 
 class Counter extends React.Component<{}, { count: number }> {
+  private didUpdate: boolean;
+
   constructor(props) {
     super(props);
     this.state = {
       count: 0
     };
     console.log("constructor Counter");
+    this.didUpdate = false;
   }
 
   // componentDidMount() {
@@ -18,22 +21,31 @@ class Counter extends React.Component<{}, { count: number }> {
   //   console.log(this.state.count);
   // }
 
-  componentWillMount() {
+  // componentWillMount() {
+  //   this.setState({ count: this.state.count + 1 });
+  //   console.log(this.state.count);
+  // }
+
+  componentDidUpdate() {
+    if(this.didUpdate) {
+      return;
+    }
+    this.didUpdate = true;
     this.setState({ count: this.state.count + 1 });
-    console.log(this.state.count);
+    console.log('did update, ', this.state.count);
   }
 
-  addOne = () => {
+  addOne = (modifier: number) => {
+    this.setState({ count: this.state.count + modifier });
+    console.log('click, ', this.state.count);
     // this.setState({ count: this.state.count + 1 });
     // console.log(this.state.count);
-    // this.setState({ count: this.state.count + 1 });
-    // console.log(this.state.count);
-    Promise.resolve().then(() => {
-      this.setState({ count: this.state.count + 1 });
-      console.log(this.state.count);
-      this.setState({ count: this.state.count + 1 });
-      console.log(this.state.count);
-    });
+    // Promise.resolve().then(() => {
+    //   this.setState({ count: this.state.count + 1 });
+    //   console.log(this.state.count);
+    //   this.setState({ count: this.state.count + 1 });
+    //   console.log(this.state.count);
+    // });
   };
 
   render() {
@@ -44,14 +56,16 @@ class Counter extends React.Component<{}, { count: number }> {
       {},
       count < 5
         ? ce("p", {}, `the number now is `, `${count}`)
-        : ce(
-            "ul",
-            {},
-            ...Array(count)
-              .fill("li")
-              .map((item, i) => ce("li", { key: i }, item))
-          ),
-      ce("p", {}, ce("button", { onClick: this.addOne }, "add one"))
+        // : ce(
+        //     "ul",
+        //     {},
+        //     ...Array(count)
+        //       .fill("li")
+        //       .map((item, i) => ce("li", { key: i }, item))
+        //   ),
+        : null,
+      ce("p", {}, ce("button", { onClick: () => this.addOne(1) }, "add one")),
+      ce("p", {}, ce("button", { onClick: () => this.addOne(-1) }, "minus one"))
     );
   }
 }

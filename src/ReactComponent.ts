@@ -1,4 +1,4 @@
-import { Child, ReactElement, IReactDOMComponent } from "./interfaces";
+import { Child, ReactElement, IReactDOMComponent, ReactNode } from "./interfaces";
 import { MountTransaction } from "./reconciler";
 
 export default abstract class ReactComponent {
@@ -10,10 +10,10 @@ export default abstract class ReactComponent {
   constructor(reactEl: Child) {
     this._curElement = reactEl;
   }
-  abstract mountComponent(transaction: MountTransaction): HTMLElement | Text;
+  abstract mountComponent(transaction: MountTransaction): ReactNode;
   abstract receiveComponent(transaction: MountTransaction, nextEl: Child): void;
   abstract unmountComponent(): void;
-  abstract getHostNode(): HTMLElement | Text;
+  abstract getHostNode(): ReactNode;
   protected onlyUpdateComponent(prevEl: Child, nextEl: Child): boolean {
     if (!prevEl && !nextEl) {
       return true;
