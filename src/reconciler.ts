@@ -108,9 +108,11 @@ const UpdateReady = {
 };
 
 function flush() {
-  if (dirtyComponents.length) {
-    const flushTransaction = new FlushTransaction();
-    flushTransaction.perform(updateDirtyComponents, null, flushTransaction);
+  while (dirtyComponents.length) {
+    if (dirtyComponents.length) {
+      const flushTransaction = new FlushTransaction();
+      flushTransaction.perform(updateDirtyComponents, null, flushTransaction);
+    }
   }
 }
 
@@ -120,6 +122,7 @@ function updateDirtyComponents(transaction: FlushTransaction) {
   for (let i = 0; i < length; i++) {
     const dirtyComp = dirtyComponents[i];
     const callbacks = dirtyComp._pendingCallbacks;
+    dirtyComp._pendingCallbacks = null;
     dirtyComp.updateComponentIfNecessary(transaction.mountTransaction);
     if (callbacks) {
       callbacks.forEach(callback =>

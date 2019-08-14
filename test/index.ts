@@ -26,18 +26,21 @@ class Counter extends React.Component<{}, { count: number }> {
   //   console.log(this.state.count);
   // }
 
-  componentDidUpdate() {
-    if(this.didUpdate) {
-      return;
-    }
-    this.didUpdate = true;
-    this.setState({ count: this.state.count + 1 });
-    console.log('did update, ', this.state.count);
-  }
+  // componentDidUpdate() {
+  //   if(this.didUpdate) {
+  //     return;
+  //   }
+  //   this.didUpdate = true;
+  //   this.setState({ count: this.state.count + 1 });
+  //   console.log('did update, ', this.state.count);
+  // }
 
   addOne = (modifier: number) => {
-    this.setState({ count: this.state.count + modifier });
-    console.log('click, ', this.state.count);
+    this.setState({ count: this.state.count + modifier }, () => {
+      this.setState({ count: 2 });
+      console.log(this.state.count);
+    });
+    // console.log('click, ', this.state.count);
     // this.setState({ count: this.state.count + 1 });
     // console.log(this.state.count);
     // Promise.resolve().then(() => {
@@ -56,14 +59,14 @@ class Counter extends React.Component<{}, { count: number }> {
       {},
       count < 5
         ? ce("p", {}, `the number now is `, `${count}`)
-        // : ce(
-        //     "ul",
-        //     {},
-        //     ...Array(count)
-        //       .fill("li")
-        //       .map((item, i) => ce("li", { key: i }, item))
-        //   ),
-        : null,
+        : // : ce(
+          //     "ul",
+          //     {},
+          //     ...Array(count)
+          //       .fill("li")
+          //       .map((item, i) => ce("li", { key: i }, item))
+          //   ),
+          null,
       ce("p", {}, ce("button", { onClick: () => this.addOne(1) }, "add one")),
       ce("p", {}, ce("button", { onClick: () => this.addOne(-1) }, "minus one"))
     );
